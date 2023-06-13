@@ -20,7 +20,7 @@ setup(
     name='IoSICP',
     version=__version__,
     packages=find_packages(),
-    url='git@github.com:huangqzj/IoSI-CP.git',
+    url='https://github.com/huangqzj/IoSI-CP.git',
     license='ZHEJIANG LAB',
     author='Qian Huang, Yuntao Liu',
     author_email='huangq@zhejianglab.com',
