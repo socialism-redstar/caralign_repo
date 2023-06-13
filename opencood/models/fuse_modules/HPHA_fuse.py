@@ -117,36 +117,36 @@ class HPHA(nn.Module):
 
         historical_x = backbone.blocks[0](historical_x)
         ## semantic information Aggregated based on multi-scale transformer module
-        if self.multi_scale:
-            ups = []
-            for i in range(self.num_levels):
-                x = backbone.blocks[i](x)
-                
-                # 1. Split the features
-                # split_x: [(L1, C, H, W), (L2, C, H, W), ...]
-                # For example [[2, 256, 48, 176], [1, 256, 48, 176], ...]
-                batch_node_features = self.regroup(x, record_len)
+        
+        ups = []
+        for i in range(self.num_levels):
+            x = backbone.blocks[i](x)
+            
+            # 1. Split the features
+            # split_x: [(L1, C, H, W), (L2, C, H, W), ...]
+            # For example [[2, 256, 48, 176], [1, 256, 48, 176], ...]
+            batch_node_features = self.regroup(x, record_len)
 
-                # 2. Fusion
-                x_fuse = []
-                for b in range(B):
-                    neighbor_feature = batch_node_features[b]
-                    x_fuse.append(self.fuse_modules[i](neighbor_feature))
-                x_fuse = torch.stack(x_fuse)
-                # 4. Deconv
-                if len(backbone.deblocks) > 0:
-                    ups.append(backbone.deblocks[i](x_fuse))
-                else:
-                    ups.append(x_fuse)
-            ups.append(historical_x[0].unsqueeze(0))
-            ups.append(historical_x[1].unsqueeze(0))
-            if len(ups) > 1:
-                x_fuse = torch.cat(ups, dim=1)
-            elif len(ups) == 1:
-                x_fuse = ups[0]
-            ## semantic information refined based on short-term attention module
-            x_fuse = self.sta(x_fuse) * x_fuse
-            if len(backbone.deblocks) > self.num_levels:
-                x_fuse = backbone.deblocks[-1](x_fuse)
+            # 2. Fusion
+            x_fuse = []
+            for b in range(B):
+                neighbor_feature = batch_node_features[b]
+                x_fuse.append(self.fuse_modules[i](neighbor_feature))
+            x_fuse = torch.stack(x_fuse)
+            # 4. Deconv
+            if len(backbone.deblocks) > 0:
+                ups.append(backbone.deblocks[i](x_fuse))
+            else:
+                ups.append(x_fuse)
+        ups.append(historical_x[0].unsqueeze(0))
+        ups.append(historical_x[1].unsqueeze(0))
+        if len(ups) > 1:
+            x_fuse = torch.cat(ups, dim=1)
+        elif len(ups) == 1:
+            x_fuse = ups[0]
+        ## semantic information refined based on short-term attention module
+        x_fuse = self.sta(x_fuse) * x_fuse
+        if len(backbone.deblocks) > self.num_levels:
+            x_fuse = backbone.deblocks[-1](x_fuse)
         
         return x_fuse
