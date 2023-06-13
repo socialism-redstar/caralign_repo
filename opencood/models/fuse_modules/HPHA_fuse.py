@@ -41,17 +41,6 @@ class EnhanceWeight(nn.Module):
         x = self.tanhAug(x) + torch.Tensor([1.0]).cuda()
         return x
 
-class EnhanceWeightConfm(nn.Module):
-    def __init__(self):
-        super(EnhanceWeightConfm, self).__init__()
-        self.fc = nn.Linear(1, 1)
-        self.tanhAug = nn.Tanh()
-
-    def forward(self, x):
-        x = self.fc(x)
-        x = self.tanhAug(x) + torch.Tensor([1.0]).cuda()
-        return x
-
 class TransformerFusion(nn.Module):
     def __init__(self, feature_dim):
         super(TransformerFusion, self).__init__()
@@ -92,7 +81,7 @@ class HPHA(nn.Module):
         self.naive_communication = Communication(args['communication'])
         self.sta = ShortTermAttention(512)
         self.enhanceweight = EnhanceWeight()
-        self.enhanceweight_confm = EnhanceWeightConfm()
+        self.enhanceweight_confm = Confm()
 
     def regroup(self, x, record_len):
         cum_sum_len = torch.cumsum(record_len, dim=0)
