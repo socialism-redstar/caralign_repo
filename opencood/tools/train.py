@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-# Author: Runsheng Xu <rxx3386@ucla.edu>
+# Initial Author: Runsheng Xu <rxx3386@ucla.edu>
+# Revised Author: Qian Huang <huangq@zhejianglab.com>
 # License: TDG-Attribution-NonCommercial-NoDistrib
 
 
