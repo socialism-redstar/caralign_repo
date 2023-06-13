@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-# Author: Qian Huangq <huangq@zhejianglab.com>
-# License: ZheJiang Lab
-
+# Initial Author: Runsheng Xu <rxx3386@ucla.edu>
+# Revised Author: Qian Huang <huangq@zhejianglab.com>
+# License: TDG-Attribution-NonCommercial-NoDistrib
 
 import argparse
 import os
