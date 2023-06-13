@@ -46,10 +46,8 @@ def load_saved_model(saved_path, model, model_type):
         else:
             initial_epoch_ = 0
         return initial_epoch_
-    if model_type == 'IoSICP':
-        initial_epoch = 58
-    else:
-        initial_epoch = findLastCheckpoint(saved_path)
+    
+    initial_epoch = findLastCheckpoint(saved_path)
 
     if initial_epoch > 0:
         model_file = os.path.join(saved_path,
