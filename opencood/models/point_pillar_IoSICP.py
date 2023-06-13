@@ -113,7 +113,7 @@ class PointPillarIoSICP(nn.Module):
             else:
                 batch_semantic_informantion_dict = torch.cat([batch_dict['spatial_features'][0].unsqueeze(0),
                                                  batch_dict['spatial_features'][3:]].unsqueeze(0), dim=0)
-            fused_feature, communication_rates = self.fusion_net(batch_semantic_informantion_dict, ## semantic information
+            fused_feature = self.fusion_net(batch_semantic_informantion_dict, ## semantic information
                                                                  batch_dict['spatial_features'][1:3], ## historical semantic information of ego
                                                                  psm_single,
                                                                  record_len,
@@ -122,12 +122,8 @@ class PointPillarIoSICP(nn.Module):
                                                                  self.backbone)
             if self.shrink_flag:
                 fused_feature = self.shrink_conv(fused_feature)
-        else:   ## 采用downsample后的低分辨率feature融合,
-            fused_feature, communication_rates = self.fusion_net(spatial_features_2d,
-                                                                 psm_single,
-                                                                 record_len,
-                                                                 pairwise_t_matrix,time_delay,)
+        
         psm = self.cls_head(fused_feature)
         rm = self.reg_head(fused_feature)
-        output_dict = {'psm': psm, 'rm': rm, 'com': communication_rates}
+        output_dict = {'psm': psm, 'rm': rm, 'com': None}
         return output_dict
