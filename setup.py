@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-# Author: Runsheng Xu <rxx3386@ucla.edu>
+# Initial Author: Runsheng Xu <rxx3386@ucla.edu>
+# Revised Author: Qian Huang <huangq@zhejianglab.com>
 # License: TDG-Attribution-NonCommercial-NoDistrib
 
 
@@ -19,10 +20,10 @@ setup(
     name='OpenCOOD',
     version=__version__,
     packages=find_packages(),
-    url='https://github.com/ucla-mobility/OpenCDA.git',
-    license='MIT',
-    author='Runsheng Xu, Hao Xiang',
-    author_email='rxx3386@ucla.edu',
+    url='git@github.com:huangqzj/IoSI-CP.git',
+    license='ZHEJIANG LAB',
+    author='Qian Huang, Yuntao Liu',
+    author_email='huangq@zhejianglab.com',
     description='An opensource pytorch framework for autonomous driving '
                 'cooperative detection',
     long_description=open("README.md").read(),
