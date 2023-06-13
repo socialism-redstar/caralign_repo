@@ -412,14 +412,13 @@ class BaseDataset(Dataset):
             return uni_time_delay
         # time delay real mode
         elif self.async_mode == 'iosi':
-            cavs_num = 5
             distance2ego = distance2ego
             T_trans_time = self.trans_time(10, cavs_num, distance2ego)
             T_sensor_time = random.randint(0, 100)
             # based on real device
-            T_compute_time = random.randint(10, 40)
+            T_compute_time = random.randint(20, 40)
             ## T_other_time indicate system other overhead, for instance, read sensor data overhead, waiting time
-            T_other_time = random.randint(0, 200)
+            T_other_time = random.randint(0, 100)
             T_time_delay = T_trans_time + T_sensor_time + T_compute_time + T_other_time
             time_delay = int(T_time_delay)
         time_delay = time_delay // 100
