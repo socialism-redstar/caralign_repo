@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+# Implementation of IoSICP fusion.
+# Revised Author: Qian Huang <huangq@zhejianglab.com>
+# License: TDG-Attribution-NonCommercial-NoDistrib
 import time
 
 import torch.nn as nn
