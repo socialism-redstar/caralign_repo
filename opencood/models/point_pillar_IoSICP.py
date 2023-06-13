@@ -105,25 +105,26 @@ class PointPillarIoSICP(nn.Module):
         if self.compression:
             # The ego feature is also compressed
             spatial_features_2d = self.naive_compressor(spatial_features_2d)
-        if self.multi_scale:
-            # add historical semantic information of ego
-            if len(batch_dict['spatial_features'][3:].shape) >= 4:
-                batch_semantic_informantion_dict = torch.cat(
-                    [batch_dict['spatial_features'][0].unsqueeze(0), batch_dict['spatial_features'][3:]], dim=0)
-            else:
-                batch_semantic_informantion_dict = torch.cat([batch_dict['spatial_features'][0].unsqueeze(0),
-                                                 batch_dict['spatial_features'][3:]].unsqueeze(0), dim=0)
-            fused_feature = self.fusion_net(batch_semantic_informantion_dict, ## semantic information
-                                                                 batch_dict['spatial_features'][1:3], ## historical semantic information of ego
-                                                                 psm_single,
-                                                                 record_len,
-                                                                 pairwise_t_matrix,
-                                                                 time_delay,
-                                                                 self.backbone)
-            if self.shrink_flag:
-                fused_feature = self.shrink_conv(fused_feature)
         
-        psm = self.cls_head(fused_feature)
-        rm = self.reg_head(fused_feature)
-        output_dict = {'psm': psm, 'rm': rm, 'com': None}
+        # add historical semantic information of ego
+        if len(batch_dict['spatial_features'][3:].shape) >= 4:
+            batch_semantic_informantion_dict = torch.cat(
+                [batch_dict['spatial_features'][0].unsqueeze(0), batch_dict['spatial_features'][3:]], dim=0)
+        else:
+            batch_semantic_informantion_dict = torch.cat([batch_dict['spatial_features'][0].unsqueeze(0),
+                                             batch_dict['spatial_features'][3:]].unsqueeze(0), dim=0)
+        # Historical Prior Hybrid Attention based Fusion Net
+        fused_feature = self.fusion_net(batch_semantic_informantion_dict, ## semantic information
+                                                             batch_dict['spatial_features'][1:3], ## historical semantic information of ego
+                                                             psm_single,
+                                                             record_len,
+                                                             pairwise_t_matrix,
+                                                             time_delay,
+                                                             self.backbone)
+        if self.shrink_flag:
+            fused_feature = self.shrink_conv(fused_feature)
+        
+        cls_res = self.cls_head(fused_feature)
+        reg_res = self.reg_head(fused_feature)
+        output_dict = {'psm': cls_res, 'rm': reg_res}
         return output_dict
