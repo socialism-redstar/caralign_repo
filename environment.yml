@@ -1,4 +1,4 @@
-name: opencood
+name: IoSICP
 channels:
   - defaults
 dependencies:
