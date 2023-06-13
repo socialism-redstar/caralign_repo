@@ -78,10 +78,8 @@ class HPHA(nn.Module):
         else:
             self.fuse_modules = TransformerFusion(args['in_channels'])
 
-        
         self.sta = ShortTermAttention(512)
         self.enhanceweight = EnhanceWeight()
-        
 
     def regroup(self, x, record_len):
         cum_sum_len = torch.cumsum(record_len, dim=0)
