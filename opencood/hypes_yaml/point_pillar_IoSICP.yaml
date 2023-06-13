@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Implementation of Where2comm fusion.
 # Initial Author: Runsheng Xu <rxx3386@ucla.edu>
 # Revised Author: Qian Huang <huangq@zhejianglab.com>
 # License: TDG-Attribution-NonCommercial-NoDistrib
@@ -13,7 +14,6 @@ wild_setting:
   seed: 20
   async: True
   async_mode: 'iosi'
-  async_overhead: 100
   loc_err: False
   xyz_std: 0.2
   ryp_std: 0.2
