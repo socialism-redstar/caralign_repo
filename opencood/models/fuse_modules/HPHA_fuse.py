@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Implementation of IoSICP fusion.
-# Revised Author: Qian Huang <huangq@zhejianglab.com>
+# Author: Qian Huang <huangq@zhejianglab.com>, Yuntao Liu <liuyt@zhejianglab.com>
 # License: TDG-Attribution-NonCommercial-NoDistrib
 
 import numpy as np
