@@ -17,7 +17,7 @@ def _read_requirements_file():
 
 
 setup(
-    name='OpenCOOD',
+    name='IoSICP',
     version=__version__,
     packages=find_packages(),
     url='git@github.com:huangqzj/IoSI-CP.git',
