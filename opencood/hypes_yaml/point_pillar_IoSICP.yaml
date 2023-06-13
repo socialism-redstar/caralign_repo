@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+# Initial Author: Runsheng Xu <rxx3386@ucla.edu>
+# Revised Author: Qian Huang <huangq@zhejianglab.com>
+# License: TDG-Attribution-NonCommercial-NoDistrib
+
 name: point_pillar_IoSICP
 root_dir: '../datasets/V2XSet/train'
 validate_dir: '../datasets/V2XSet/validate'
