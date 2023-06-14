@@ -121,23 +121,20 @@ class HPHA(nn.Module):
         ups = []
         for i in range(self.num_levels):
             x = backbone.blocks[i](x)
-            
-            # 1. Split the features
-            # split_x: [(L1, C, H, W), (L2, C, H, W), ...]
-            # For example [[2, 256, 48, 176], [1, 256, 48, 176], ...]
             batch_node_features = self.regroup(x, record_len)
 
-            # 2. Fusion
+            # Fusion
             x_fuse = []
             for b in range(B):
                 neighbor_feature = batch_node_features[b]
                 x_fuse.append(self.fuse_modules[i](neighbor_feature))
             x_fuse = torch.stack(x_fuse)
-            # 4. Deconv
+           
             if len(backbone.deblocks) > 0:
                 ups.append(backbone.deblocks[i](x_fuse))
             else:
                 ups.append(x_fuse)
+        ## add historical semantic information of ego
         ups.append(historical_x[0].unsqueeze(0))
         ups.append(historical_x[1].unsqueeze(0))
         if len(ups) > 1:
