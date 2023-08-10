@@ -226,7 +226,7 @@ def setup_lr_schedular(hypes, optimizer, n_iter_per_epoch):
         scheduler = MultiStepLR(optimizer,
                                 milestones=milestones,
                                 gamma=gamma)
-
+    #make a justification
     elif lr_schedule_config['core_method'] == 'exponential':
         print('ExponentialLR is chosen for lr scheduler')
         from torch.optim.lr_scheduler import ExponentialLR
