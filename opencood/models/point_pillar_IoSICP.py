@@ -27,20 +27,20 @@ class PointPillarIoSICP(nn.Module):
         self.backbone = BaseBEVBackbone(args['base_bev_backbone'], 64)
 
         # Used to down-sample the feature map for efficient computation
-        if 'shrink_header' in args:
+        if 'shrink_header' in args:  #channel 384 shrink to 256
             self.shrink_flag = True
             self.shrink_conv = DownsampleConv(args['shrink_header'])
         else:
             self.shrink_flag = False
 
-        if args['compression']:
+        if args['compression']:   #no compression
             self.compression = True
             self.naive_compressor = NaiveCompressor(256, args['compression'])
         else:
             self.compression = False
 
         self.fusion_net = HPHA(args['HPHA_fusion'])
-        self.multi_scale = args['HPHA_fusion']['multi_scale']
+        self.multi_scale = args['HPHA_fusion']['multi_scale']  #set to True
 
         self.cls_head = nn.Conv2d(args['head_dim'], args['anchor_number'], kernel_size=1)
         self.reg_head = nn.Conv2d(args['head_dim'], 7 * args['anchor_number'], kernel_size=1)
@@ -92,13 +92,16 @@ class PointPillarIoSICP(nn.Module):
         batch_dict = self.backbone(batch_dict)
 
         # N, C, H', W': [N, 256, 48, 176]
+        #batch_size=1 
         if len(batch_dict['spatial_features_2d'][3:].shape) >= 4:
+            #找到当前时刻的智能体特征融合，历史帧数量为2，放置在12位置
             spatial_features_2d = torch.cat([batch_dict['spatial_features_2d'][0].unsqueeze(0),batch_dict['spatial_features_2d'][3:]], dim=0)
         else:
             spatial_features_2d = torch.cat([batch_dict['spatial_features_2d'][0].unsqueeze(0),batch_dict['spatial_features_2d'][3:]].unsqueeze(0), dim=0)
         # Down-sample feature to reduce memory
         if self.shrink_flag: ## self.shrink_flag->True
             spatial_features_2d = self.shrink_conv(spatial_features_2d)
+        # 得到空间置信度信息，各智能体的空间置信度
         psm_single = self.cls_head(spatial_features_2d)
 
         # Compressor
@@ -107,6 +110,8 @@ class PointPillarIoSICP(nn.Module):
             spatial_features_2d = self.naive_compressor(spatial_features_2d)
         
         # add historical semantic information of ego
+        
+        #batch_size=1
         if len(batch_dict['spatial_features'][3:].shape) >= 4:
             batch_semantic_informantion_dict = torch.cat(
                 [batch_dict['spatial_features'][0].unsqueeze(0), batch_dict['spatial_features'][3:]], dim=0)

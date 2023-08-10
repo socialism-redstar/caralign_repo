@@ -49,13 +49,14 @@ class SparseMapGenerator(nn.Module):
         sparse_masks = []
         sparse_rates = []
         for b in range(B):
-            ori_sparse_maps, _ = batch_confidence_maps[b].sigmoid().max(dim=1, keepdim=True)
+            #(num_cavs, channel, H, W)
+            ori_sparse_maps, _ = batch_confidence_maps[b].sigmoid().max(dim=1, keepdim=True)  
             if self.smooth:
                 sparse_maps = self.gaussian_filter(ori_sparse_maps)
             else:
                 sparse_maps = ori_sparse_maps
-
-            L = sparse_maps.shape[0]
+            #L=num_cavs
+            L = sparse_maps.shape[0]   #sparse_maps:(num_cavs, 1, H, W)
             if self.training:
                 # Official training proxy objective
                 K = int(H * W * random.uniform(0, 1))
@@ -75,11 +76,11 @@ class SparseMapGenerator(nn.Module):
             # Ego
             sparse_mask[0] = 1
 
-            sparse_masks.append(sparse_mask)
+            sparse_masks.append(sparse_mask)  #保存所有batch
             sparse_rates.append(sparse_rate)
         sparse_rates = sum(sparse_rates) / B
         # print('self.training,sparse_rates:',self.training,sparse_rates)
-        sparse_masks = torch.cat(sparse_masks, dim=0)
+        sparse_masks = torch.cat(sparse_masks, dim=0) #(num_cavs, 1, H, W)
         return sparse_masks, sparse_rates
 
 class CollaboratorSelection(nn.Module):
@@ -90,6 +91,7 @@ class CollaboratorSelection(nn.Module):
         self.tanhAug = nn.Tanh()
 
     def forward(self, x, historical_x, sparse_maps, truely_time_delay_t, adj):
+        #各个智能体的maps均值乘以延时得到了weight
         sparse_maps_latency = torch.mul(torch.mean(torch.mul(sparse_maps,sparse_maps[0].unsqueeze(0)),dim=1).unsqueeze(1),truely_time_delay_t)
         enhance_weight = self.gcn(sparse_maps_latency, adj)
         enhance_weight = self.tanhAug(enhance_weight) + torch.Tensor([1.0]).cuda()
@@ -132,8 +134,8 @@ class TransformerFusion(nn.Module):
 class ShortTermAttention(nn.Module):
     def __init__(self, in_planes, ratio=16):
         super(ShortTermAttention, self).__init__()
-        self.avg_pool = nn.AdaptiveAvgPool2d(1)
-        self.max_pool = nn.AdaptiveMaxPool2d(1)
+        self.avg_pool = nn.AdaptiveAvgPool2d(1)  #(batch_size, channel, 1, 1)
+        self.max_pool = nn.AdaptiveMaxPool2d(1)  #(batch_size, channel, 1, 1)
 
         self.fc = nn.Sequential(nn.Conv2d(in_planes, in_planes // 16, 1, bias=False),
                                 nn.ReLU(),
@@ -146,23 +148,23 @@ class ShortTermAttention(nn.Module):
         out = avg_out + max_out
         return self.sigmoid(out)
 
-
+#主模块
 class HPHA(nn.Module):
     def __init__(self, args):
         super(HPHA, self).__init__()
         self.discrete_ratio = args['voxel_size'][0]
-        self.downsample_rate = args['downsample_rate']
+        self.downsample_rate = args['downsample_rate']  #4
 
-        self.fully = args['fully']
+        self.fully = args['fully']   #False
         if self.fully:
             print('constructing a fully connected sparse graph')
         else:
             print('constructing a partially connected sparse graph')
 
-        self.multi_scale = args['multi_scale']
+        self.multi_scale = args['multi_scale']  #True
         if self.multi_scale:
-            layer_nums = args['layer_nums']
-            num_filters = args['num_filters']
+            layer_nums = args['layer_nums']   #[ 3, 5, 8 ]
+            num_filters = args['num_filters'] #[ 64, 128, 256 ]
             self.num_levels = len(layer_nums)
             self.fuse_modules = nn.ModuleList()
             # layer_nums,self.num_levels,num_filters: [3, 5, 8] 3 [64, 128, 256]
@@ -172,7 +174,7 @@ class HPHA(nn.Module):
         else:
             self.fuse_modules = TransformerFusion(args['in_channels'])
         self.sparse_map_generator = SparseMapGenerator(args['sparse'])
-        self.sta = ShortTermAttention(512)
+        self.sta = ShortTermAttention(512)  #128*4
         self.enhanceweight = EnhanceWeight()
         self.collaborator_selection = CollaboratorSelection(nin=1, nout=1)
     def regroup(self, x, record_len):
@@ -193,19 +195,21 @@ class HPHA(nn.Module):
             Fused feature.
         """
 
-        _, C, H, W = x.shape
+        _, C, H, W = x.shape     #   _:sum(num_cavs)
         B = pairwise_t_matrix.shape[0]
 
         ## Collaborator Selection and Semantic Information Enhanced based on IoSI
         original_sparse_maps = self.regroup(psm_single,record_len)
         sparse_maps, sparse_rates = self.sparse_map_generator(original_sparse_maps, B)
         cav_num, C, H, W = sparse_maps.shape
-        sparse_maps = sparse_maps.view(cav_num, -1) # [4, 8448]
+        sparse_maps = sparse_maps.view(cav_num, -1) # [4, 8448] 176*48=8448
         truely_time_delay = orin_time_delay[0][0:sparse_maps.shape[0]]
         truely_time_delay_full = torch.full(truely_time_delay.shape, 0.1).to(truely_time_delay.device)
-        truely_time_delay_t = torch.tensor((torch.tensor(1.0).to(truely_time_delay.device) / (truely_time_delay + truely_time_delay_full)).unsqueeze(1),dtype=torch.float32) #truely_time_delay.shape [4,1]
+        #truely_time_delay.shape [4,1]
+        truely_time_delay_t = torch.tensor((torch.tensor(1.0).to(truely_time_delay.device) / (truely_time_delay + truely_time_delay_full)).unsqueeze(1),dtype=torch.float32) 
         adj = torch.eye(truely_time_delay_t.shape[0]).to(truely_time_delay_t.device)
         x, historical_x = self.collaborator_selection(x, historical_x, sparse_maps, truely_time_delay_t, adj)
+        #压缩了尺寸 feature_stride=4
         historical_x = backbone.blocks[0](historical_x)
 
         ## Semantic Information Aggregated from Spatial Dimension based on Multi-scale Transformer Module
@@ -214,7 +218,7 @@ class HPHA(nn.Module):
             x = backbone.blocks[i](x)
             batch_node_features = self.regroup(x, record_len)
 
-            # Fusion
+            # attentive fusion
             x_fuse = []
             for b in range(B):
                 neighbor_feature = batch_node_features[b]
@@ -228,7 +232,7 @@ class HPHA(nn.Module):
         ## Semantic Information Refined from Temporal Dimension based on Short-term Attention Module
         ups.append(historical_x[0].unsqueeze(0))
         ups.append(historical_x[1].unsqueeze(0))
-        if len(ups) > 1:
+        if len(ups) > 1:   #len(ups)=3+2=5
             x_fuse = torch.cat(ups, dim=1)
         elif len(ups) == 1:
             x_fuse = ups[0]

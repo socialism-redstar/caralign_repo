@@ -276,6 +276,7 @@ class BaseDataset(Dataset):
                                                        cur_ego_pose_flag)
             data[cav_id]['lidar_np'] = \
                 pcd_utils.pcd_to_np(cav_content[timestamp_key_delay]['lidar'])
+            #historical semantic information 
             if model_type == 'IoSICP' and data[cav_id]['ego'] == True:
                 for idxadd in [10000,10001]:
                     data[str(int(cav_id)+idxadd)] = OrderedDict()
